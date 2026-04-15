@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Café-Tabac — Présentation & Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Cinzel:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --espresso: #0f0500;
+  --dark-brown: #1a0800;
+  --medium-brown: #2d1200;
+  --surface: #3a1a00;
+  --amber: #c47a2e;
+  --amber-light: #e09a4a;
+  --amber-pale: #f0c07a;
+  --cream: #f5e8d0;
+  --text: #e8d5b5;
+  --text-muted: #a07848;
+  --correct: #4a7c3f;
+  --wrong: #7c2020;
+  --correct-light: #6aad5f;
+  --wrong-light: #c04040;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: var(--espresso);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(100,40,0,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(80,30,0,0.2) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.beans-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.bean {
+  position: absolute; width: 18px; height: 28px; border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 35%, #5a2e08, #2a1004);
+  box-shadow: inset 2px 2px 4px rgba(255,180,60,0.08), 0 2px 6px rgba(0,0,0,0.4);
+  opacity: 0.18;
+}
+.bean::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(-20deg);
+  width: 2px; height: 70%; background: rgba(0,0,0,0.4); border-radius: 2px;
+}
+
+/* ===== NAV ===== */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 40px;
+  background: linear-gradient(to bottom, rgba(10,4,0,0.97) 80%, transparent);
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.nav-brand svg { width: 26px; height: 26px; opacity: 0.85; }
+.nav-names { font-size: 11px; line-height: 1.6; color: var(--text-muted); letter-spacing: 0.5px; }
+.nav-links { display: flex; gap: 28px; font-size: 12px; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 300; align-items: center; }
+.nav-links span {
+  cursor: pointer; transition: color 0.2s; padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+.nav-links span:hover, .nav-links span.active { color: var(--amber-light); border-bottom-color: var(--amber); }
+.nav-quiz-btn {
+  background: linear-gradient(135deg, var(--amber), var(--amber-light));
+  color: var(--espresso); font-weight: 700; font-size: 11px;
+  letter-spacing: 2px; padding: 8px 18px; border-radius: 20px;
+  cursor: pointer; transition: all 0.2s; border: none; font-family: 'Cinzel', serif;
+}
+.nav-quiz-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196,122,46,0.4); }
+
+/* ===== APP CONTAINER ===== */
+#app { position: relative; z-index: 1; }
+
+/* ===== SLIDES ===== */
+.slides-container { min-height: 100vh; }
+.slide {
+  display: none; min-height: 100vh;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 100px 40px 60px; text-align: center;
+  animation: slideIn 0.5s ease both;
+}
+.slide.active { display: flex; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* slide navigation arrows */
+.slide-nav {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 16px; align-items: center; z-index: 150;
+}
+.slide-btn {
+  background: rgba(42,18,0,0.9); border: 1px solid rgba(196,122,46,0.3);
+  color: var(--amber-light); font-size: 18px; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.slide-btn:hover { background: rgba(196,122,46,0.2); border-color: var(--amber); }
+.slide-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.slide-counter {
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px;
+  color: var(--text-muted); min-width: 60px; text-align: center;
+}
+
+/* ===== SLIDE CONTENT STYLES ===== */
+.script { font-family: 'Dancing Script', cursive; color: var(--cream); }
+.cinzel { font-family: 'Cinzel', serif; }
+.underline-bar {
+  width: 80px; height: 3px; margin: 16px auto;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  border-radius: 2px;
+}
+
+/* Slide 1 — Hero */
+.hero-title { font-family: 'Dancing Script', cursive; font-size: clamp(64px, 10vw, 110px); font-weight: 700; color: var(--cream); text-shadow: 0 4px 24px rgba(196,122,46,0.3); }
+.hero-badge { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 5px; color: var(--amber); margin-top: 14px; }
+.hero-photo {
+  margin-top: 40px; max-width: 440px; width: 90%;
+  border: 12px solid #f5e8d0; border-radius: 4px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+  transform: rotate(-1deg);
+  background: linear-gradient(135deg, #3a2010, #1a0800);
+  aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center;
+  font-family: 'Dancing Script', cursive; color: var(--amber); font-size: 20px;
+}
+.authors { margin-top: 24px; font-size: 12px; color: var(--text-muted); letter-spacing: 1px; }
+
+/* Slide 2 — Sommaire */
+.sommaire-grid { display: flex; flex-direction: column; gap: 20px; max-width: 680px; text-align: left; margin-top: 30px; }
+.sommaire-item {
+  display: flex; gap: 20px; align-items: flex-start;
+  background: rgba(42,18,0,0.6); border: 1px solid rgba(196,122,46,0.15);
+  border-radius: 12px; padding: 20px 24px;
+  transition: border-color 0.2s;
+}
+.sommaire-item:hover { border-color: rgba(196,122,46,0.4); }
+.sommaire-num {
+  font-family: 'Dancing Script', cursive; font-size: 36px; color: var(--amber);
+  line-height: 1; flex-shrink: 0;
+}
+.sommaire-text h3 { font-family: 'Cinzel', serif; font-size: 13px; color: var(--amber-light); letter-spacing: 1px; margin-bottom: 6px; }
+.sommaire-text p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+/* Slide 3 — Partie 1 */
+.bullets-card {
+  background: linear-gradient(135deg, rgba(42,18,0,0.85), rgba(26,8,0,0.9));
+  border: 1px solid rgba(196,122,46,0.2); border-radius: 16px;
+  padding: 36px 40px; max-width: 680px; text-align: left; margin-top: 24px;
+}
+.bullet-item { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.bullet-item:last-child { margin-bottom: 0; }
+.bullet-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1.5px; color: var(--amber); margin-bottom: 4px; }
+.bullet-desc { font-size: 14px; color: var(--text); line-height: 1.6; }
+.bullet-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); margin-top: 6px; flex-shrink: 0; }
+
+/* Slide 4 — Partie 2a */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 820px; margin-top: 24px; }
+.col-card {
+  background: linear-gradient(135deg, rgba(42,18,0,0.85), rgba(26,8,0,0.9));
+  border: 1px solid rgba(196,122,46,0.2); border-radius: 16px; padding: 28px 28px; text-align: left;
+}
+.col-title { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px; color: var(--amber-light); margin-bottom: 16px; }
+.col-item { font-size: 13px; color: var(--text); line-height: 1.7; padding-left: 14px; position: relative; margin-bottom: 8px; }
+.col-item::before { content: '—'; position: absolute; left: 0; color: var(--amber); }
+.diversif-badge {
+  margin-top: 24px; background: rgba(196,122,46,0.15); border: 1px solid rgba(196,122,46,0.3);
+  border-radius: 10px; padding: 16px 20px; text-align: center;
+}
+.diversif-badge h4 { font-family: 'Dancing Script', cursive; font-size: 26px; color: var(--amber-light); margin-bottom: 6px; }
+.diversif-badge p { font-size: 13px; color: var(--text-muted); }
+
+/* Slide 5 — Partie 2b Risques */
+.swot-table { max-width: 700px; width: 100%; margin-top: 24px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(196,122,46,0.2); }
+.swot-header { display: grid; grid-template-columns: 1fr 1fr; }
+.swot-h { padding: 16px 24px; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px; background: var(--amber); color: var(--espresso); font-weight: 700; }
+.swot-body { display: grid; grid-template-columns: 1fr 1fr; }
+.swot-cell { padding: 24px 24px; background: rgba(90,45,0,0.5); border-top: 1px solid rgba(196,122,46,0.15); }
+.swot-cell:first-child { border-right: 1px solid rgba(196,122,46,0.15); }
+.swot-item { font-size: 13px; color: var(--text); line-height: 1.8; padding-left: 14px; position: relative; }
+.swot-item::before { content: '→'; position: absolute; left: 0; color: var(--amber); }
+
+/* Slide 6 — Partie 3 */
+.legal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 820px; margin-top: 24px; }
+.legal-card {
+  background: linear-gradient(135deg, rgba(42,18,0,0.85), rgba(26,8,0,0.9));
+  border: 1px solid rgba(196,122,46,0.2); border-radius: 16px; padding: 28px; text-align: left;
+}
+.legal-num {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  color: var(--espresso); margin-bottom: 14px;
+}
+.legal-title { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1.5px; color: var(--amber-light); margin-bottom: 10px; }
+.legal-text { font-size: 13px; color: var(--text); line-height: 1.7; }
+.rencontre-box { background: var(--amber); color: var(--espresso); border-radius: 8px; padding: 14px 20px; text-align: center; margin-bottom: 14px; }
+.rencontre-box h4 { font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.do-dont { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.do-item { font-size: 12px; color: var(--text); line-height: 1.6; }
+.do-item strong { color: var(--amber); }
+
+/* Slide 7 — Bancaire */
+.bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 820px; margin-top: 32px; align-items: start; }
+.bank-circle {
+  width: 120px; height: 120px; border-radius: 50%; background: var(--amber);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px; font-weight: 700;
+  color: var(--espresso); text-align: center; line-height: 1.4;
+  margin: 0 auto 20px; box-shadow: 0 8px 32px rgba(196,122,46,0.3);
+}
+.bank-items { display: flex; flex-direction: column; gap: 10px; }
+.bank-item { font-size: 13px; color: var(--text); line-height: 1.6; padding-left: 14px; position: relative; }
+.bank-item::before { content: '·'; position: absolute; left: 0; color: var(--amber); font-size: 20px; line-height: 1; }
+.bank-item small { color: var(--text-muted); display: block; font-size: 11px; }
+.bank-divider { width: 1px; background: rgba(196,122,46,0.2); min-height: 180px; margin: 0 auto; }
+
+/* Slide 8 — Conclusion */
+.conclusion-arrows { display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin-top: 32px; }
+.arrow-item { display: flex; align-items: center; gap: 20px; font-size: 16px; color: var(--text); }
+.arrow-svg { font-size: 28px; color: var(--amber); }
+
+/* ===== QUIZ MODE ===== */
+#quizApp { display: none; position: fixed; inset: 0; z-index: 300; overflow-y: auto; background: var(--espresso); }
+#quizApp.active { display: block; }
+
+/* Quiz screens */
+.quiz-screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
+.quiz-screen.active { display: flex; }
+
+/* Lobby */
+#lobbyScreen { gap: 24px; }
+.room-code-display {
+  background: linear-gradient(135deg, rgba(42,18,0,0.9), rgba(26,8,0,0.95));
+  border: 2px solid var(--amber); border-radius: 20px;
+  padding: 32px 48px; text-align: center;
+}
+.room-code-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 10px; }
+.room-code { font-family: 'Dancing Script', cursive; font-size: 72px; color: var(--amber-light); line-height: 1; }
+.player-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 560px; margin-top: 8px; }
+.player-tag {
+  background: rgba(196,122,46,0.15); border: 1px solid rgba(196,122,46,0.3);
+  border-radius: 20px; padding: 8px 16px;
+  font-size: 13px; color: var(--cream); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.player-tag .emoji { font-size: 16px; }
+.player-count { font-family: 'Cinzel', serif; font-size: 12px; color: var(--text-muted); letter-spacing: 2px; }
+
+/* Join screen */
+#joinScreen { gap: 20px; }
+.join-input {
+  background: rgba(42,18,0,0.8); border: 2px solid rgba(196,122,46,0.4);
+  border-radius: 12px; padding: 14px 20px; font-size: 18px;
+  color: var(--cream); font-family: 'Lato', sans-serif;
+  width: 100%; max-width: 320px; text-align: center; letter-spacing: 2px;
+  outline: none; transition: border-color 0.2s;
+}
+.join-input:focus { border-color: var(--amber); }
+.join-input::placeholder { color: var(--text-muted); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--amber), var(--amber-light));
+  color: var(--espresso); font-family: 'Cinzel', serif; font-weight: 700;
+  font-size: 12px; letter-spacing: 2px; padding: 14px 32px;
+  border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(196,122,46,0.4); }
+.btn-secondary {
+  background: transparent; border: 1px solid rgba(196,122,46,0.3);
+  color: var(--text-muted); font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: 2px; padding: 10px 24px;
+  border-radius: 20px; cursor: pointer; transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+
+/* Host controls */
+.host-controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.waiting-pulse {
+  width: 12px; height: 12px; border-radius: 50%; background: var(--amber);
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+
+/* Countdown */
+#countdownScreen { gap: 16px; }
+.countdown-num { font-family: 'Dancing Script', cursive; font-size: 140px; color: var(--amber); line-height: 1; animation: countPop 0.4s ease; }
+@keyframes countPop { from { transform: scale(1.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Quiz Question */
+#questionScreen { gap: 0; padding: 80px 24px 80px; }
+.q-header { width: 100%; max-width: 760px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.q-badge { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 3px; color: var(--text-muted); }
+.timer-ring { position: relative; width: 56px; height: 56px; }
+.timer-svg { transform: rotate(-90deg); }
+.timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 4; }
+.timer-fill { fill: none; stroke: var(--amber); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+.timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Dancing Script', cursive; font-size: 22px; color: var(--amber-light); }
+
+.q-card {
+  width: 100%; max-width: 760px;
+  background: linear-gradient(135deg, rgba(42,18,0,0.9), rgba(26,8,0,0.95));
+  border: 1px solid rgba(196,122,46,0.2); border-radius: 20px;
+  padding: 36px 44px; box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+}
+.q-text { font-family: 'Dancing Script', cursive; font-size: clamp(22px,3.5vw,30px); color: var(--cream); line-height: 1.4; margin-bottom: 32px; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.opt-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(196,122,46,0.15);
+  border-radius: 12px; padding: 14px 18px; cursor: pointer; transition: all 0.2s;
+  text-align: left; color: var(--text); font-family: 'Lato', sans-serif; font-size: 14px;
+}
+.opt-btn:hover:not(.disabled) { background: rgba(196,122,46,0.12); border-color: rgba(196,122,46,0.4); transform: translateY(-1px); }
+.opt-btn.disabled { cursor: not-allowed; }
+.opt-btn.correct { background: rgba(74,124,63,0.25); border-color: #6aad5f; }
+.opt-btn.wrong { background: rgba(124,32,32,0.25); border-color: #c04040; }
+.opt-btn.faded { opacity: 0.35; }
+.opt-letter {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  background: var(--amber); color: var(--espresso);
+}
+.opt-btn.correct .opt-letter { background: #6aad5f; color: #fff; }
+.opt-btn.wrong .opt-letter { background: #c04040; color: #fff; }
+
+/* Feedback */
+.feedback-bar {
+  width: 100%; max-width: 760px; border-radius: 12px;
+  padding: 16px 24px; margin-top: 12px; display: none;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.feedback-bar.correct-fb { background: rgba(74,124,63,0.25); border: 1px solid #6aad5f; display: block; }
+.feedback-bar.wrong-fb { background: rgba(124,32,32,0.25); border: 1px solid #c04040; display: block; }
+.fb-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; margin-bottom: 6px; }
+.feedback-bar.correct-fb .fb-title { color: #6aad5f; }
+.feedback-bar.wrong-fb .fb-title { color: #c04040; }
+.fb-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+
+/* Player waiting */
+.answered-badge {
+  background: linear-gradient(135deg, var(--amber), var(--amber-light));
+  border-radius: 20px; padding: 24px 40px; text-align: center; display: none;
+}
+.answered-badge.show { display: block; }
+.answered-badge h3 { font-family: 'Dancing Script', cursive; font-size: 32px; color: var(--espresso); }
+.answered-badge p { font-size: 13px; color: rgba(15,5,0,0.7); margin-top: 4px; }
+
+/* Leaderboard */
+#leaderboardScreen { gap: 20px; }
+.lb-item {
+  display: flex; align-items: center; gap: 16px;
+  background: linear-gradient(135deg, rgba(42,18,0,0.8), rgba(26,8,0,0.9));
+  border: 1px solid rgba(196,122,46,0.15); border-radius: 12px;
+  padding: 14px 20px; width: 100%; max-width: 480px;
+  transition: border-color 0.3s;
+}
+.lb-item.top { border-color: var(--amber); background: linear-gradient(135deg, rgba(196,122,46,0.15), rgba(26,8,0,0.9)); }
+.lb-rank { font-family: 'Dancing Script', cursive; font-size: 28px; color: var(--amber); width: 36px; text-align: center; }
+.lb-name { flex: 1; font-size: 15px; color: var(--cream); font-weight: 600; }
+.lb-score { font-family: 'Cinzel', serif; font-size: 13px; color: var(--amber-light); }
+.lb-medal { font-size: 22px; }
+
+/* Score result */
+#resultScreen { gap: 20px; }
+.score-circle-big {
+  width: 140px; height: 140px; border-radius: 50%;
+  border: 4px solid var(--amber); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; margin: 0 auto;
+  background: radial-gradient(ellipse at 30% 30%, rgba(196,122,46,0.2), transparent);
+}
+.score-big-num { font-family: 'Dancing Script', cursive; font-size: 56px; color: var(--amber-light); line-height: 1; }
+.score-big-denom { font-family: 'Cinzel', serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; }
+
+/* Misc */
+.section-title { font-family: 'Dancing Script', cursive; font-size: clamp(36px, 5vw, 60px); color: var(--cream); }
+.section-subtitle { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 4px; color: var(--amber); margin-bottom: 8px; }
+.partie-badge {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 3px;
+  color: var(--espresso); background: var(--amber); padding: 6px 14px;
+  border-radius: 20px; margin-bottom: 20px; display: inline-block;
+}
+.msg-info { font-size: 13px; color: var(--text-muted); text-align: center; }
+.error-msg { color: #c04040; font-size: 13px; text-align: center; }
+
+/* Host vs Player toggle */
+.mode-tabs { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid rgba(196,122,46,0.3); }
+.mode-tab {
+  flex: 1; padding: 10px 20px; background: transparent;
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1px;
+  color: var(--text-muted); cursor: pointer; border: none; transition: all 0.2s;
+}
+.mode-tab.active { background: var(--amber); color: var(--espresso); font-weight: 700; }
+
+/* Loading dots */
+.loading-dots { display: flex; gap: 6px; align-items: center; }
+.loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); animation: dot-bounce 1.2s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
+
+@media (max-width: 640px) {
+  .options-grid { grid-template-columns: 1fr; }
+  .two-col, .legal-grid, .bank-grid { grid-template-columns: 1fr; }
+  nav { padding: 12px 20px; }
+  .nav-links { gap: 14px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<div class="beans-bg" id="beansContainer"></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <div class="nav-brand">
+    <svg viewBox="0 0 28 28" fill="none">
+      <ellipse cx="14" cy="18" rx="10" ry="7" fill="#c47a2e" opacity="0.8"/>
+      <ellipse cx="14" cy="16" rx="8" ry="5" fill="#3a1a00"/>
+      <path d="M10 8 Q14 4 18 8" stroke="#c47a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="11" y="7" width="6" height="2" rx="1" fill="#c47a2e" opacity="0.5"/>
+    </svg>
+    <div class="nav-names">Petross Gabrielyan<br>Luka Joksimovic</div>
+  </div>
+  <div class="nav-links">
+    <span onclick="goSlide(0)" id="nl-0">Introduction</span>
+    <span onclick="goSlide(2)" id="nl-2">Partie 1</span>
+    <span onclick="goSlide(3)" id="nl-3">Partie 2</span>
+    <span onclick="goSlide(5)" id="nl-5">Partie 3</span>
+    <span onclick="goSlide(7)" id="nl-7">Conclusion</span>
+    <button class="nav-quiz-btn" onclick="openQuiz()">☕ QUIZ</button>
+  </div>
+</nav>
+
+<!-- SLIDES -->
+<div id="presentationApp" class="slides-container">
+  <!-- Slide 0: Hero -->
+  <div class="slide active" id="slide-0">
+    <div class="hero-title">Café-Tabac</div>
+    <span class="hero-badge">PETROSS GABRIELYAN · LUKA JOKSIMOVIC</span>
+    <div class="underline-bar"></div>
+    <div class="hero-photo">☕ Le Rond Point</div>
+    <div class="authors" style="margin-top:16px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;">PRÉSENTATION PROFESSIONNELLE</div>
+  </div>
+
+  <!-- Slide 1: Sommaire -->
+  <div class="slide" id="slide-1">
+    <div class="section-title">Sommaire</div>
+    <div class="underline-bar"></div>
+    <div class="sommaire-grid">
+      <div class="sommaire-item">
+        <div class="sommaire-num">1.</div>
+        <div class="sommaire-text">
+          <h3>L'ÉCOSYSTÈME DU MÉTIER</h3>
+          <p>Ses caractéristiques, ses contraintes et les professions qui s'y apparentent</p>
+        </div>
+      </div>
+      <div class="sommaire-item">
+        <div class="sommaire-num">2.</div>
+        <div class="sommaire-text">
+          <h3>L'ÉTUDE DE SON MARCHÉ</h3>
+          <p>Sa concurrence, ses grandes tendances actuelles, ainsi que les risques et opportunités économiques</p>
+        </div>
+      </div>
+      <div class="sommaire-item">
+        <div class="sommaire-num">3.</div>
+        <div class="sommaire-text">
+          <h3>LE CŒUR DE LA RELATION D'AFFAIRES</h3>
+          <p>Du cadre juridique très strict jusqu'aux meilleures pratiques commerciales et bancaires</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 2: Partie 1 -->
+  <div class="slide" id="slide-2">
+    <div class="partie-badge">PARTIE 1</div>
+    <div class="section-title">Un métier sous haute surveillance</div>
+    <div class="underline-bar"></div>
+    <div class="bullets-card">
+      <div class="bullet-item">
+        <div class="bullet-dot"></div>
+        <div>
+          <div class="bullet-label">DOUBLE STATUT</div>
+          <div class="bullet-desc">Commerçant indépendant & préposé des douanes — une nature juridique hybride unique en France.</div>
+        </div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot"></div>
+        <div>
+          <div class="bullet-label">INVESTISSEMENTS LOURDS</div>
+          <div class="bullet-desc">Sécurité (coffres, caméras) & licences obligatoires (Tabac, Licence IV) représentent des coûts significatifs à l'entrée.</div>
+        </div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot"></div>
+        <div>
+          <div class="bullet-label">CONTRAINTES MAJEURES</div>
+          <div class="bullet-desc">Ultra-réglementation avec prix fixés par l'État, et forte exposition à l'insécurité physique.</div>
+        </div>
+      </div>
+      <div class="bullet-item">
+        <div class="bullet-dot"></div>
+        <div>
+          <div class="bullet-label">MÉTIERS CONNEXES</div>
+          <div class="bullet-desc">Maison de la presse, kiosques, PMU, Vape Shops — un écosystème de proximité diversifié.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Partie 2a -->
+  <div class="slide" id="slide-3">
+    <div class="partie-badge">PARTIE 2</div>
+    <div class="section-title">Un marché en pleine mutation</div>
+    <div class="underline-bar"></div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-title">CONCURRENCE FÉROCE</div>
+        <div class="col-item">Marché parallèle et contrebande (~30% du tabac)</div>
+        <div class="col-item">Grande distribution (snacking et presse)</div>
+        <div class="col-item">Commerces spécialisés (coffee shops, vape shops)</div>
+      </div>
+      <div>
+        <div class="col-card" style="margin-bottom:16px;">
+          <div class="col-title">TENDANCES ACTUELLES</div>
+          <div class="col-item">Baisse structurelle de la consommation de tabac</div>
+          <div class="col-item">Essor des services de relais colis</div>
+          <div class="col-item">Digitalisation des paiements (carte Nickel)</div>
+        </div>
+        <div class="diversif-badge">
+          <h4>La Diversification</h4>
+          <p>Devenir le "commerçant d'utilité locale"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Partie 2b -->
+  <div class="slide" id="slide-4">
+    <div class="partie-badge">PARTIE 2</div>
+    <div class="section-title">Risques, menaces & opportunités</div>
+    <div class="underline-bar"></div>
+    <div class="swot-table">
+      <div class="swot-header">
+        <div class="swot-h" style="border-right:1px solid rgba(15,5,0,0.2);">MENACES & RISQUES</div>
+        <div class="swot-h">OPPORTUNITÉS</div>
+      </div>
+      <div class="swot-body">
+        <div class="swot-cell">
+          <div class="swot-item">Baisse des volumes de tabac</div>
+          <div class="swot-item" style="margin-top:12px;">Inflation des charges d'exploitation</div>
+          <div class="swot-item" style="margin-top:12px;">Risques sécuritaires (vols, agressions)</div>
+        </div>
+        <div class="swot-cell">
+          <div class="swot-item">Capter de nouveaux flux via les services (relais colis, paiements administratifs)</div>
+          <div class="swot-item" style="margin-top:12px;">Dernier commerce de proximité dans certaines zones rurales</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Partie 3 -->
+  <div class="slide" id="slide-5">
+    <div class="partie-badge">PARTIE 3</div>
+    <div class="section-title">Le cadre juridique & l'approche client</div>
+    <div class="underline-bar"></div>
+    <div class="legal-grid">
+      <div class="col-card">
+        <div class="legal-num">01</div>
+        <div class="legal-title">MONOPOLE & STATUTS OBLIGATOIRES</div>
+        <div class="legal-text">Uniquement <strong style="color:var(--amber-light);">Entreprise Individuelle (EI)</strong> ou <strong style="color:var(--amber-light);">Société en Nom Collectif (SNC)</strong> — toute forme à responsabilité limitée est exclue.</div>
+      </div>
+      <div class="col-card">
+        <div class="legal-num">02</div>
+        <div class="legal-title">IMPLICATIONS</div>
+        <div class="legal-text">Gérant <strong style="color:var(--amber-light);">indéfiniment et solidairement responsable</strong> (statut TNS) — engagement total du patrimoine personnel.</div>
+      </div>
+      <div class="col-card" style="grid-column: 1 / -1;">
+        <div class="rencontre-box"><h4>LA RENCONTRE CLIENT</h4></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div>
+            <div class="bullet-label" style="color:var(--correct-light);margin-bottom:8px;">✓ À FAIRE</div>
+            <div class="do-item">RDV en heures creuses (après-midi)</div>
+            <div class="do-item">Visite sur le lieu de vente</div>
+            <div class="do-item">Adapter l'offre au profil du buraliste</div>
+          </div>
+          <div>
+            <div class="bullet-label" style="color:var(--wrong-light);margin-bottom:8px;">✗ À ÉVITER</div>
+            <div class="do-item">Sous-estimer la gestion des espèces</div>
+            <div class="do-item">Offres packagées "génériques"</div>
+            <div class="do-item">RDV le matin (heure de pointe)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Bancaire -->
+  <div class="slide" id="slide-6">
+    <div class="partie-badge">PARTIE 3</div>
+    <div class="section-title">Le partenariat bancaire</div>
+    <div class="underline-bar"></div>
+    <div class="bank-grid">
+      <div>
+        <div class="bank-circle">SPHÈRE<br>PROFES-<br>SIONNELLE</div>
+        <div class="bank-items">
+          <div class="bank-item">Gestion des flux monétiques<small>TPE rapides, automates de dépôt</small></div>
+          <div class="bank-item">Crédits d'investissement<small>Sécurité, transformation</small></div>
+          <div class="bank-item">Financement du BFR<small>Facilités de caisse</small></div>
+        </div>
+      </div>
+      <div class="bank-divider"></div>
+      <div>
+        <div class="bank-circle" style="background:var(--medium-brown);border:2px solid var(--amber);">SPHÈRE<br>PRIVÉE</div>
+        <div class="bank-items">
+          <div class="bank-item">Préparation à la retraite<small>PER — Plan d'Épargne Retraite</small></div>
+          <div class="bank-item">Protection de la famille et du patrimoine<small>Assurance-Vie</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Conclusion -->
+  <div class="slide" id="slide-7">
+    <div class="section-title">Conclusion</div>
+    <div class="underline-bar"></div>
+    <div style="font-family:'Dancing Script',cursive;font-size:clamp(32px,5vw,54px);color:var(--amber-light);margin:24px 0 8px;">Le buraliste de demain</div>
+    <div class="conclusion-arrows">
+      <div class="arrow-item"><span class="arrow-svg">→</span><span>Le couteau suisse de la proximité : tabac, services, paiements, relais colis</span></div>
+      <div class="arrow-item"><span class="arrow-svg">→</span><span>Un partenaire qui peut devenir fidèle si l'accompagnement est sur-mesure</span></div>
+    </div>
+    <div style="margin-top:40px;">
+      <button class="btn-primary" onclick="openQuiz()" style="font-size:14px;padding:16px 36px;">
+        ☕ Lancer le Quiz Kahoot →
+      </button>
+    </div>
+  </div>
+
+  <!-- Slide 8: Contact -->
+  <div class="slide" id="slide-8">
+    <div class="section-title" style="font-size:clamp(40px,7vw,80px);">Our Contact</div>
+    <div class="underline-bar"></div>
+    <div style="display:flex;flex-direction:column;gap:16px;margin-top:32px;">
+      <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:var(--amber-light);">PETROSS GABRIELYAN</div>
+      <div style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:var(--amber-light);">LUKA JOKSIMOVIC</div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide navigation -->
+<div class="slide-nav" id="slideNav">
+  <button class="slide-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+  <div class="slide-counter" id="slideCounter">1 / 9</div>
+  <button class="slide-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+</div>
+
+<!-- ===== QUIZ APP ===== -->
+<div id="quizApp">
+  <!-- Entry screen -->
+  <div class="quiz-screen active" id="entryScreen">
+    <div class="section-title">Quiz Café-Tabac</div>
+    <div class="underline-bar"></div>
+    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:var(--text-muted);margin:8px 0 28px;">MODE MULTIJOUEUR</div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabHost" onclick="switchMode('host')">☕ HÔTE</button>
+      <button class="mode-tab" id="tabJoin" onclick="switchMode('join')">🎮 REJOINDRE</button>
+    </div>
+    <div id="hostEntry">
+      <p class="msg-info" style="margin:16px 0;">Créez une session et partagez le code aux joueurs.</p>
+      <button class="btn-primary" onclick="createSession()">Créer la session</button>
+    </div>
+    <div id="joinEntry" style="display:none;width:100%;max-width:320px;">
+      <p class="msg-info" style="margin:16px 0;">Entrez le code fourni par l'hôte :</p>
+      <input class="join-input" id="codeInput" placeholder="CODE" maxlength="4" oninput="this.value=this.value.toUpperCase()">
+      <div style="height:12px;"></div>
+      <input class="join-input" id="nameInput" placeholder="Votre prénom" maxlength="16" style="letter-spacing:0;">
+      <div style="height:12px;"></div>
+      <button class="btn-primary" onclick="joinSession()">Rejoindre →</button>
+      <div id="joinError" class="error-msg" style="margin-top:10px;"></div>
+    </div>
+    <div style="height:20px;"></div>
+    <button class="btn-secondary" onclick="closeQuiz()">← Retour à la présentation</button>
+  </div>
+
+  <!-- Lobby (host) -->
+  <div class="quiz-screen" id="lobbyScreen">
+    <div class="section-title" style="font-size:36px;">Salle d'attente</div>
+    <div class="room-code-display">
+      <div class="room-code-label">CODE DE LA PARTIE</div>
+      <div class="room-code" id="roomCodeDisplay">----</div>
+    </div>
+    <div class="player-count" id="playerCountLabel">0 JOUEUR(S) CONNECTÉ(S)</div>
+    <div class="player-list" id="playerList"></div>
+    <div style="height:10px;"></div>
+    <div class="host-controls">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="waiting-pulse"></div>
+        <span class="msg-info">En attente des joueurs...</span>
+      </div>
+      <button class="btn-primary" id="startBtn" onclick="startGame()" style="opacity:0.5;cursor:not-allowed;" disabled>
+        Lancer le quiz →
+      </button>
+    </div>
+    <button class="btn-secondary" style="margin-top:12px;" onclick="cancelSession()">Annuler</button>
+  </div>
+
+  <!-- Player waiting room -->
+  <div class="quiz-screen" id="playerWaitScreen">
+    <div class="section-title" style="font-size:32px;">Tu es connecté !</div>
+    <div style="font-family:'Dancing Script',cursive;font-size:48px;color:var(--amber);" id="playerNameDisplay">-</div>
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <p class="msg-info">En attente du lancement par l'hôte...</p>
+  </div>
+
+  <!-- Countdown -->
+  <div class="quiz-screen" id="countdownScreen">
+    <div style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:3px;color:var(--text-muted);">LA PARTIE COMMENCE DANS</div>
+    <div class="countdown-num" id="countdownNum">3</div>
+  </div>
+
+  <!-- Question (host view) -->
+  <div class="quiz-screen" id="questionScreen">
+    <div class="q-header">
+      <div>
+        <div class="q-badge" id="qBadgeDisplay">QUESTION 01</div>
+        <div style="font-size:10px;letter-spacing:2px;color:var(--text-muted);margin-top:4px;" id="diffBadge">FACILE</div>
+      </div>
+      <div class="timer-ring">
+        <svg class="timer-svg" width="56" height="56" viewBox="0 0 56 56">
+          <circle class="timer-track" cx="28" cy="28" r="24"/>
+          <circle class="timer-fill" id="timerCircle" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timerNum">20</div>
+      </div>
+    </div>
+    <div class="q-card">
+      <div class="q-text" id="questionText">...</div>
+      <div class="options-grid" id="optionsGrid"></div>
+    </div>
+    <div class="feedback-bar" id="feedbackBar">
+      <div class="fb-title" id="fbTitle"></div>
+      <div class="fb-text" id="fbText"></div>
+    </div>
+    <div class="answered-badge" id="answeredBadge">
+      <h3>☕ Réponse enregistrée !</h3>
+      <p>En attente des autres joueurs...</p>
+    </div>
+    <!-- Host: next button -->
+    <div id="hostNextWrap" style="display:none;margin-top:16px;">
+      <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:12px;" id="answersCountLabel"></div>
+      <button class="btn-primary" id="hostNextBtn" onclick="hostNextQuestion()">
+        QUESTION SUIVANTE →
+      </button>
+    </div>
+  </div>
+
+  <!-- Leaderboard (between questions) -->
+  <div class="quiz-screen" id="leaderboardScreen">
+    <div class="section-title" style="font-size:36px;">Classement</div>
+    <div class="underline-bar"></div>
+    <div id="leaderboardList" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;"></div>
+    <div id="lbHostControls" style="display:none;margin-top:20px;">
+      <button class="btn-primary" onclick="continueFromLeaderboard()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- Final result -->
+  <div class="quiz-screen" id="resultScreen">
+    <div class="section-title" style="font-size:40px;" id="resultTitle">Résultats !</div>
+    <div class="underline-bar"></div>
+    <div class="score-circle-big">
+      <div class="score-big-num" id="myFinalScore">0</div>
+      <div class="score-big-denom">POINTS</div>
+    </div>
+    <div style="font-family:'Dancing Script',cursive;font-size:26px;color:var(--amber-light);margin:8px 0;" id="myRankDisplay"></div>
+    <div id="finalLeaderboard" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;"></div>
+    <div style="height:16px;"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn-primary" onclick="restartAll()">↺ Rejouer</button>
+      <button class="btn-secondary" onclick="closeQuiz()">← Présentation</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== COFFEE BEANS =====
+function generateBeans() {
+  const c = document.getElementById('beansContainer');
+  for (let i = 0; i < 24; i++) {
+    const b = document.createElement('div');
+    b.className = 'bean';
+    b.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;transform:rotate(${Math.random()*360}deg) scale(${0.5+Math.random()*0.9});opacity:${0.05+Math.random()*0.12};`;
+    c.appendChild(b);
+  }
+}
+generateBeans();
+
+// ===== SLIDES =====
+const TOTAL_SLIDES = 9;
+let currentSlide = 0;
+
+const navMap = {0:'nl-0',1:'nl-0',2:'nl-2',3:'nl-3',4:'nl-3',5:'nl-5',6:'nl-5',7:'nl-7',8:'nl-7'};
+
+function goSlide(n) {
+  document.getElementById('slide-'+currentSlide).classList.remove('active');
+  currentSlide = Math.max(0, Math.min(TOTAL_SLIDES-1, n));
+  const s = document.getElementById('slide-'+currentSlide);
+  s.classList.add('active');
+  s.style.animation='none';
+  requestAnimationFrame(()=>{ s.style.animation='slideIn 0.45s ease both'; });
+  document.getElementById('slideCounter').textContent = `${currentSlide+1} / ${TOTAL_SLIDES}`;
+  document.getElementById('prevBtn').disabled = currentSlide === 0;
+  document.getElementById('nextBtn').disabled = currentSlide === TOTAL_SLIDES-1;
+  // update nav
+  document.querySelectorAll('.nav-links span').forEach(s=>s.classList.remove('active'));
+  const nid = navMap[currentSlide];
+  if (nid) document.getElementById(nid)?.classList.add('active');
+}
+
+function changeSlide(dir) { goSlide(currentSlide + dir); }
+
+// keyboard navigation
+document.addEventListener('keydown', e=>{
+  if (document.getElementById('quizApp').classList.contains('active')) return;
+  if (e.key==='ArrowRight'||e.key==='ArrowDown') changeSlide(1);
+  if (e.key==='ArrowLeft'||e.key==='ArrowUp') changeSlide(-1);
+});
+
+goSlide(0);
+
+// ===== QUIZ =====
+const QUESTIONS = [
+  {
+    level:1, label:"FACILE",
+    text:"Quel est le double statut particulier du buraliste en France ?",
+    options:["Agent de l'État & entrepreneur privé","Commerçant indépendant & préposé des douanes","Fonctionnaire & gérant de franchise","Artisan & délégataire de service public"],
+    answer:1,
+    feedback:"Le buraliste possède un double statut unique : commerçant indépendant sur le plan commercial, il est également préposé des douanes — une nature juridique hybride très particulière."
+  },
+  {
+    level:2, label:"FACILE – MOYEN",
+    text:"Environ quel pourcentage du tabac vendu en France provient du marché parallèle et de la contrebande ?",
+    options:["~10% du tabac","~20% du tabac","~30% du tabac","~50% du tabac"],
+    answer:2,
+    feedback:"Le marché parallèle et la contrebande représentent environ 30% du tabac consommé en France — un chiffre vertigineux qui constitue l'une des menaces concurrentielles majeures pour les buralistes."
+  },
+  {
+    level:3, label:"MOYEN",
+    text:"Quels sont les deux seuls statuts juridiques autorisés pour exploiter un bureau de tabac ?",
+    options:["SAS et SARL","SCI et SNC","Entreprise Individuelle (EI) et Société en Nom Collectif (SNC)","SA et Entreprise Individuelle (EI)"],
+    answer:2,
+    feedback:"En raison du monopole d'État, l'exploitant doit impérativement opter pour une EI ou une SNC — ces formes impliquent une responsabilité indéfinie et solidaire du gérant (statut TNS)."
+  },
+  {
+    level:4, label:"DIFFICILE",
+    text:"Parmi ces pratiques pour un rendez-vous avec un buraliste, laquelle est recommandée ?",
+    options:["Prendre RDV le matin à l'ouverture, période la plus calme","Présenter des offres packagées standardisées","Effectuer le RDV en heures creuses (après-midi) et visiter le lieu de vente","Éviter de parler de la gestion des espèces, sujet sensible"],
+    answer:2,
+    feedback:"RDV l'après-midi (heures creuses) et visite du point de vente sont recommandés. À éviter : sous-estimer la gestion des espèces et proposer des offres packagées génériques."
+  },
+  {
+    level:5, label:"EXPERT",
+    text:"Dans le partenariat bancaire, quel produit relève de la sphère privée pour protéger la famille et le patrimoine du buraliste ?",
+    options:["Les TPE rapides et automates de dépôt","Le financement du BFR via les facilités de caisse","L'Assurance-Vie","Les crédits d'investissement pour la sécurité"],
+    answer:2,
+    feedback:"L'Assurance-Vie appartient à la sphère privée du buraliste, aux côtés du PER (retraite). Les TPE, BFR et crédits d'investissement relèvent de la sphère professionnelle."
+  }
+];
+
+const EMOJIS = ['☕','🫘','🚬','📦','💰','🎯','⭐','🏆','🎲','🍵'];
+const LETTERS = ['A','B','C','D'];
+const TIMER_DURATION = 20;
+const POLL_INTERVAL = 2000;
+
+let isHost = false;
+let sessionCode = null;
+let myName = null;
+let myScore = 0;
+let currentQ = 0;
+let timerInterval = null;
+let pollInterval = null;
+let timeLeft = TIMER_DURATION;
+let hasAnswered = false;
+let gamePhase = 'lobby'; // lobby | countdown | question | leaderboard | result
+let myEmoji = '';
+let answeredThisRound = false;
+
+// Storage helpers
+async function storageGet(key, shared=true) {
+  try { const r = await window.storage.get(key, shared); return r ? JSON.parse(r.value) : null; }
+  catch(e) { return null; }
+}
+async function storageSet(key, val, shared=true) {
+  try { await window.storage.set(key, JSON.stringify(val), shared); return true; }
+  catch(e) { return false; }
+}
+async function storageDel(key, shared=true) {
+  try { await window.storage.delete(key, shared); } catch(e) {}
+}
+
+// ===== UI HELPERS =====
+function showScreen(id) {
+  document.querySelectorAll('.quiz-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function openQuiz() {
+  document.getElementById('quizApp').classList.add('active');
+  document.getElementById('mainNav').style.display = 'none';
+  document.getElementById('slideNav').style.display = 'none';
+  showScreen('entryScreen');
+}
+
+function closeQuiz() {
+  clearAllIntervals();
+  document.getElementById('quizApp').classList.remove('active');
+  document.getElementById('mainNav').style.display = 'flex';
+  document.getElementById('slideNav').style.display = 'flex';
+  // reset
+  isHost = false; sessionCode = null; myName = null; myScore = 0; currentQ = 0;
+  hasAnswered = false; answeredThisRound = false; gamePhase = 'lobby';
+  showScreen('entryScreen');
+  switchMode('host');
+}
+
+function clearAllIntervals() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+function switchMode(mode) {
+  document.getElementById('tabHost').classList.toggle('active', mode==='host');
+  document.getElementById('tabJoin').classList.toggle('active', mode==='join');
+  document.getElementById('hostEntry').style.display = mode==='host' ? 'flex' : 'none';
+  document.getElementById('joinEntry').style.display = mode==='join' ? 'block' : 'none';
+  document.getElementById('hostEntry').style.flexDirection = 'column';
+  document.getElementById('hostEntry').style.alignItems = 'center';
+  document.getElementById('hostEntry').style.gap = '8px';
+}
+
+// ===== HOST: CREATE SESSION =====
+function genCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
+
+async function createSession() {
+  const code = genCode();
+  sessionCode = code;
+  isHost = true;
+  myName = 'Hôte';
+  myEmoji = '☕';
+
+  const session = {
+    code, phase: 'lobby', question: 0,
+    players: {},
+    answers: {},
+    scores: {},
+    startTime: null
+  };
+  await storageSet('ct:session:'+code, session);
+
+  document.getElementById('roomCodeDisplay').textContent = code;
+  document.getElementById('playerList').innerHTML = '';
+  document.getElementById('playerCountLabel').textContent = '0 JOUEUR(S) CONNECTÉ(S)';
+  showScreen('lobbyScreen');
+  startPollingLobby();
+}
+
+async function cancelSession() {
+  clearAllIntervals();
+  if (sessionCode) await storageDel('ct:session:'+sessionCode);
+  showScreen('entryScreen');
+}
+
+function startPollingLobby() {
+  pollInterval = setInterval(async ()=>{
+    const s = await storageGet('ct:session:'+sessionCode);
+    if (!s) return;
+    updateLobbyUI(s);
+    if (s.phase === 'countdown') { clearInterval(pollInterval); startCountdown(); }
+  }, POLL_INTERVAL);
+}
+
+function updateLobbyUI(s) {
+  const players = Object.values(s.players||{});
+  document.getElementById('playerCountLabel').textContent = `${players.length} JOUEUR(S) CONNECTÉ(S)`;
+  const pl = document.getElementById('playerList');
+  pl.innerHTML = players.map(p=>`<div class="player-tag"><span class="emoji">${p.emoji}</span>${p.name}</div>`).join('');
+  const btn = document.getElementById('startBtn');
+  if (players.length >= 1) {
+    btn.disabled = false; btn.style.opacity='1'; btn.style.cursor='pointer';
+  }
+}
+
+// ===== PLAYER: JOIN =====
+async function joinSession() {
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  const name = document.getElementById('nameInput').value.trim();
+  document.getElementById('joinError').textContent = '';
+
+  if (!code || code.length < 4) { document.getElementById('joinError').textContent = 'Entrez un code valide.'; return; }
+  if (!name) { document.getElementById('joinError').textContent = 'Entrez votre prénom.'; return; }
+
+  const s = await storageGet('ct:session:'+code);
+  if (!s) { document.getElementById('joinError').textContent = 'Session introuvable. Vérifiez le code.'; return; }
+  if (s.phase !== 'lobby') { document.getElementById('joinError').textContent = 'La partie est déjà en cours.'; return; }
+
+  sessionCode = code;
+  myName = name;
+  myEmoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  isHost = false;
+  myScore = 0;
+
+  const pid = name + '_' + Date.now();
+  const players = s.players || {};
+  players[pid] = { name, emoji: myEmoji, pid };
+  s.players = players;
+  s.scores = s.scores || {};
+  s.scores[pid] = 0;
+  await storageSet('ct:session:'+code, s);
+
+  // save my pid
+  window._myPid = pid;
+
+  document.getElementById('playerNameDisplay').textContent = myEmoji + ' ' + name;
+  showScreen('playerWaitScreen');
+  startPollingForStart();
+}
+
+function startPollingForStart() {
+  pollInterval = setInterval(async ()=>{
+    const s = await storageGet('ct:session:'+sessionCode);
+    if (!s) return;
+    if (s.phase === 'countdown') { clearInterval(pollInterval); startCountdown(); }
+  }, POLL_INTERVAL);
+}
+
+// ===== HOST: START GAME =====
+async function startGame() {
+  clearAllIntervals();
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  s.phase = 'countdown';
+  s.question = 0;
+  s.answers = {};
+  await storageSet('ct:session:'+sessionCode, s);
+  startCountdown();
+}
+
+// ===== COUNTDOWN =====
+function startCountdown() {
+  showScreen('countdownScreen');
+  let n = 3;
+  document.getElementById('countdownNum').textContent = n;
+  const iv = setInterval(()=>{
+    n--;
+    if (n <= 0) {
+      clearInterval(iv);
+      startQuestion();
+    } else {
+      const el = document.getElementById('countdownNum');
+      el.textContent = n;
+      el.style.animation='none';
+      requestAnimationFrame(()=>{ el.style.animation='countPop 0.4s ease both'; });
+    }
+  }, 1000);
+}
+
+// ===== QUESTION =====
+async function startQuestion() {
+  const s = await storageGet('ct:session:'+sessionCode);
+  currentQ = s ? s.question : 0;
+  answeredThisRound = false;
+  hasAnswered = false;
+  renderQuestion(QUESTIONS[currentQ]);
+  showScreen('questionScreen');
+
+  // Update phase
+  if (isHost) {
+    s.phase = 'question';
+    s.answers = {};
+    await storageSet('ct:session:'+sessionCode, s);
+    // Poll for answers
+    pollInterval = setInterval(checkAllAnswered, 1500);
+  } else {
+    // Poll for phase change
+    document.getElementById('answeredBadge').classList.remove('show');
+    pollInterval = setInterval(pollForPhaseChange, 1500);
+  }
+
+  startTimer();
+}
+
+function renderQuestion(q) {
+  document.getElementById('qBadgeDisplay').textContent = `QUESTION 0${currentQ+1}`;
+  document.getElementById('diffBadge').textContent = q.label;
+  document.getElementById('questionText').textContent = q.text;
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+  document.getElementById('answeredBadge').classList.remove('show');
+  if (isHost) document.getElementById('hostNextWrap').style.display = 'none';
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  q.options.forEach((opt, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<div class="opt-letter">${LETTERS[i]}</div><div>${opt}</div>`;
+    btn.onclick = ()=> selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = TIMER_DURATION;
+  updateTimerUI(timeLeft);
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    updateTimerUI(timeLeft);
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (!hasAnswered && !isHost) {
+        submitAnswer(-1); // timed out
+      }
+      if (isHost) revealAnswer();
+    }
+  }, 1000);
+}
+
+function updateTimerUI(t) {
+  document.getElementById('timerNum').textContent = t;
+  const circumference = 150.8;
+  const offset = circumference * (1 - t/TIMER_DURATION);
+  const circle = document.getElementById('timerCircle');
+  circle.style.strokeDashoffset = offset;
+  circle.style.stroke = t <= 5 ? '#c04040' : t <= 10 ? '#e09a4a' : 'var(--amber)';
+}
+
+async function selectAnswer(idx, btn) {
+  if (hasAnswered || answeredThisRound) return;
+  hasAnswered = true;
+  answeredThisRound = true;
+
+  // Disable all options
+  document.querySelectorAll('#optionsGrid .opt-btn').forEach(b=>b.classList.add('disabled'));
+
+  if (isHost) {
+    revealAnswer(idx);
+  } else {
+    await submitAnswer(idx);
+    document.getElementById('answeredBadge').classList.add('show');
+  }
+}
+
+async function submitAnswer(idx) {
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  const q = QUESTIONS[currentQ];
+  const isCorrect = idx === q.answer;
+  const points = isCorrect ? Math.round(1000 * (timeLeft / TIMER_DURATION)) + 200 : 0;
+  if (isCorrect) myScore += points;
+
+  const pid = window._myPid || myName;
+  s.answers = s.answers || {};
+  s.answers[pid] = { idx, correct: isCorrect, points };
+  s.scores = s.scores || {};
+  s.scores[pid] = (s.scores[pid]||0) + points;
+  await storageSet('ct:session:'+sessionCode, s);
+
+  if (isCorrect) {
+    document.getElementById('feedbackBar').className = 'feedback-bar correct-fb';
+    document.getElementById('fbTitle').textContent = '✓ BONNE RÉPONSE';
+    document.getElementById('fbText').textContent = q.feedback;
+  } else {
+    document.getElementById('feedbackBar').className = 'feedback-bar wrong-fb';
+    document.getElementById('fbTitle').textContent = '✗ MAUVAISE RÉPONSE';
+    document.getElementById('fbText').textContent = q.feedback;
+  }
+
+  // highlight correct
+  document.querySelectorAll('#optionsGrid .opt-btn').forEach((b,i)=>{
+    if (i === q.answer) b.classList.add('correct');
+    else if (i === idx && !isCorrect) b.classList.add('wrong');
+    else b.classList.add('faded');
+  });
+}
+
+async function checkAllAnswered() {
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  const players = Object.keys(s.players||{});
+  const answers = Object.keys(s.answers||{});
+  document.getElementById('answersCountLabel').textContent = `${answers.length}/${players.length} réponse(s)`;
+  document.getElementById('hostNextWrap').style.display = 'block';
+  // If all answered or time's up, enable button
+}
+
+function revealAnswer(idx) {
+  clearInterval(timerInterval);
+  clearInterval(pollInterval);
+  const q = QUESTIONS[currentQ];
+
+  document.querySelectorAll('#optionsGrid .opt-btn').forEach((b,i)=>{
+    b.classList.add('disabled');
+    if (i === q.answer) b.classList.add('correct');
+    else if (idx !== undefined && i === idx && idx !== q.answer) b.classList.add('wrong');
+    else b.classList.add('faded');
+  });
+
+  document.getElementById('feedbackBar').className = 'feedback-bar correct-fb';
+  document.getElementById('fbTitle').textContent = '✓ BONNE RÉPONSE';
+  document.getElementById('fbText').textContent = q.feedback;
+
+  if (isHost) {
+    pollInterval = setInterval(checkAllAnswered, 1500);
+  }
+}
+
+async function pollForPhaseChange() {
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  if (s.phase === 'leaderboard') {
+    clearAllIntervals();
+    showLeaderboard(s, false);
+  } else if (s.phase === 'result') {
+    clearAllIntervals();
+    showResult(s);
+  }
+}
+
+// ===== HOST: NEXT QUESTION =====
+async function hostNextQuestion() {
+  clearAllIntervals();
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  s.phase = 'leaderboard';
+  await storageSet('ct:session:'+sessionCode, s);
+  showLeaderboard(s, true);
+}
+
+async function showLeaderboard(s, asHost) {
+  const scores = s.scores || {};
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const lb = document.getElementById('leaderboardList');
+  const medals = ['🥇','🥈','🥉'];
+  lb.innerHTML = sorted.map(([pid,pts],i)=>{
+    const pname = (s.players||{})[pid]?.name || pid.split('_')[0];
+    const emoji = (s.players||{})[pid]?.emoji || '☕';
+    return `<div class="lb-item ${i===0?'top':''}">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-medal">${medals[i]||''}</div>
+      <div class="lb-name">${emoji} ${pname}</div>
+      <div class="lb-score">${pts} pts</div>
+    </div>`;
+  }).join('');
+  document.getElementById('lbHostControls').style.display = asHost ? 'block' : 'none';
+  showScreen('leaderboardScreen');
+
+  if (!asHost) {
+    // Poll for next phase
+    pollInterval = setInterval(async ()=>{
+      const s2 = await storageGet('ct:session:'+sessionCode);
+      if (!s2) return;
+      if (s2.phase === 'question') { clearInterval(pollInterval); startQuestion(); }
+      else if (s2.phase === 'result') { clearInterval(pollInterval); showResult(s2); }
+    }, 1500);
+  }
+}
+
+async function continueFromLeaderboard() {
+  clearAllIntervals();
+  const s = await storageGet('ct:session:'+sessionCode);
+  if (!s) return;
+  if (currentQ + 1 >= QUESTIONS.length) {
+    s.phase = 'result';
+    await storageSet('ct:session:'+sessionCode, s);
+    showResult(s);
+  } else {
+    s.question = currentQ + 1;
+    s.phase = 'countdown';
+    s.answers = {};
+    await storageSet('ct:session:'+sessionCode, s);
+    startCountdown();
+  }
+}
+
+// ===== RESULT =====
+function showResult(s) {
+  const scores = s.scores || {};
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+
+  const pid = window._myPid || myName;
+  const myFinal = scores[pid] || myScore;
+  const myRank = sorted.findIndex(([p])=>p===pid) + 1;
+
+  document.getElementById('myFinalScore').textContent = myFinal || myScore;
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('myRankDisplay').textContent = myRank ? `${medals[myRank-1]||''} ${myRank}ème place` : '';
+  document.getElementById('resultTitle').textContent = myFinal >= 3500 ? '🏆 Expert !' : myFinal >= 2000 ? '⭐ Bien joué !' : 'Résultats finaux';
+
+  const lb = document.getElementById('finalLeaderboard');
+  lb.innerHTML = sorted.map(([p,pts],i)=>{
+    const pname = (s.players||{})[p]?.name || p.split('_')[0];
+    const emoji = (s.players||{})[p]?.emoji || '☕';
+    return `<div class="lb-item ${i===0?'top':''}">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-medal">${medals[i]||''}</div>
+      <div class="lb-name">${emoji} ${pname}</div>
+      <div class="lb-score">${pts} pts</div>
+    </div>`;
+  }).join('');
+
+  showScreen('resultScreen');
+}
+
+async function restartAll() {
+  clearAllIntervals();
+  myScore = 0; currentQ = 0; answeredThisRound = false; hasAnswered = false;
+  window._myPid = null;
+  if (sessionCode) await storageDel('ct:session:'+sessionCode);
+  sessionCode = null;
+  showScreen('entryScreen');
+  switchMode('host');
+}
+</script>
+</body>
+</html>
